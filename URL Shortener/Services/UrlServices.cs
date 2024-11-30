@@ -1,6 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Numerics;
-using System.Text;
 using URL_Shortener.Data;
 using URL_Shortener.Models.Entities;
 

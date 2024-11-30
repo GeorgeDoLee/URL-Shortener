@@ -30,8 +30,8 @@ namespace URL_Shortener.Controllers
                 if (url == null)
                 {
                     Guid id = Guid.NewGuid();
-                    string shortCode = UrlServices.GuidToBase62(id);
-                    string host = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}";
+                    string shortCode = Base62Services.GuidToBase62(id);
+                    string host = $"{_httpContextAccessor.HttpContext.Request.Host}/api/Url";
                     url = new Url
                     {
                         Id = id,
@@ -57,7 +57,7 @@ namespace URL_Shortener.Controllers
         {
             try
             {
-                Guid id = UrlServices.Base62ToGuid(shortCode);
+                Guid id = Base62Services.Base62ToGuid(shortCode);
 
                 var url = await _dbContext.Urls.FindAsync(id);
 

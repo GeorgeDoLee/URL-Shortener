@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 using System.Text;
 using URL_Shortener.Data;
 using URL_Shortener.Models.Entities;
@@ -7,16 +8,13 @@ namespace URL_Shortener.Services
 {
     public static class UrlServices
     {
-        public static async Task<Url> AlreadyShortenedAsync(string shortCode, ApplicationDbContext dbContext)
+        private static readonly string Base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+        public static async Task<Url> AlreadyShortenedAsync(string originalUrl, ApplicationDbContext dbContext)
         {
-            Guid id = Base62ToGuid(shortCode);
-
-            var url = await dbContext.Urls.FindAsync(id);
-
-            if (url == null)
-            {
-                return null;
-            }
+            var url = await dbContext.Urls
+                .Where(u => u.OriginalUrl == originalUrl)
+                .FirstOrDefaultAsync();
 
             return url;
         }
@@ -52,13 +50,11 @@ namespace URL_Shortener.Services
                 bigInt = -bigInt;
             }
 
-            const string base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
             StringBuilder base62 = new StringBuilder();
             while (bigInt > 0)
             {
                 int remainder = (int)(bigInt % 62);
-                base62.Insert(0, base62Chars[remainder]);
+                base62.Insert(0, Base62Chars[remainder]);
                 bigInt /= 62;
             }
 
@@ -67,13 +63,11 @@ namespace URL_Shortener.Services
 
         public static Guid Base62ToGuid(string shortCode)
         {
-            const string base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
             BigInteger bigInt = BigInteger.Zero;
 
             foreach (char c in shortCode)
             {
-                int value = base62Chars.IndexOf(c);
+                int value = Base62Chars.IndexOf(c);
                 if (value == -1)
                 {
                     throw new ArgumentException("Invalid character in Base62 string", nameof(shortCode));

@@ -12,8 +12,8 @@ using URL_Shortener.Data;
 namespace URL_Shortener.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241130085712_initial")]
-    partial class initial
+    [Migration("20241202194230_int over guid")]
+    partial class intoverguid
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,9 +27,11 @@ namespace URL_Shortener.Migrations
 
             modelBuilder.Entity("URL_Shortener.Models.Entities.Url", b =>
                 {
-                    b.Property<Guid>("id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("datetime2");
@@ -42,7 +44,7 @@ namespace URL_Shortener.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("id");
+                    b.HasKey("Id");
 
                     b.ToTable("Urls");
                 });

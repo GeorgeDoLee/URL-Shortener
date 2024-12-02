@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace URL_Shortener.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class intoverguid : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,14 +15,15 @@ namespace URL_Shortener.Migrations
                 name: "Urls",
                 columns: table => new
                 {
-                    id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     OriginalUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ShortenedUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Urls", x => x.id);
+                    table.PrimaryKey("PK_Urls", x => x.Id);
                 });
         }
 

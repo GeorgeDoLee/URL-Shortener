@@ -9,16 +9,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace URL_Shortener.Services
 {
-    public class CleanupServices : IHostedService, IDisposable
+    public class CleanupService : IHostedService, IDisposable
     {
-        private readonly ApplicationDbContext _dbContext;
-        private readonly ILogger<CleanupServices> _logger;
+        private readonly ILogger<CleanupService> _logger;
+        private readonly UrlService _urlService;
         private Timer _timer;
 
-        public CleanupServices(ApplicationDbContext dbContext, ILogger<CleanupServices> logger)
+        public CleanupService(UrlService urlService, ILogger<CleanupService> logger)
         {
-            _dbContext = dbContext;
             _logger = logger;
+            _urlService = urlService;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -44,16 +44,9 @@ namespace URL_Shortener.Services
         {
             try
             {
-                var expiredUrls = await _dbContext.Urls
-                    .Where(u => u.ExpirationDate < DateTime.UtcNow)
-                    .ToListAsync();
+                var deletedUrls = await _urlService.RemoveExpiredUrlsAsync();
 
-                if (expiredUrls.Any())
-                {
-                    _dbContext.Urls.RemoveRange(expiredUrls);
-                    await _dbContext.SaveChangesAsync();
-                    _logger.LogInformation($"{expiredUrls.Count} expired URLs were deleted.");
-                }
+                _logger.LogInformation($"{deletedUrls} expired URLs were deleted.");
             }
             catch (Exception ex)
             {

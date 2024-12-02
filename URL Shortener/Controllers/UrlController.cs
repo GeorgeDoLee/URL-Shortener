@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using URL_Shortener.Data;
-using URL_Shortener.Models.Entities;
+﻿using Microsoft.AspNetCore.Mvc;
 using URL_Shortener.Services;
 using static System.Net.WebRequestMethods;
 
@@ -11,75 +8,43 @@ namespace URL_Shortener.Controllers
     [ApiController]
     public class UrlController : ControllerBase
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ApplicationDbContext _dbContext;
+        private readonly UrlService _urlService;
 
-        public UrlController(IHttpContextAccessor httpContextAccessor, ApplicationDbContext dbContext)
+        public UrlController(UrlService urlService)
         {
-            _httpContextAccessor = httpContextAccessor;
-            _dbContext = dbContext;
+            _urlService = urlService;
         }
+
 
         [HttpPost]
         public async Task<IActionResult> ShortenUrl([FromBody] string originalUrl)
         {
-            try
-            {
-                var url = await UrlServices.AlreadyShortenedAsync(originalUrl, _dbContext);
+            var url = await _urlService.ShortenUrlAsync(originalUrl);
 
-                if (url == null)
-                {
-                    Guid id = Guid.NewGuid();
-                    string shortCode = Base62Services.GuidToBase62(id);
-                    string host = $"{_httpContextAccessor.HttpContext.Request.Host}/api/Url";
-                    url = new Url
-                    {
-                        Id = id,
-                        OriginalUrl = originalUrl,
-                        ShortenedUrl = $"{host}/{shortCode}",
-                        ExpirationDate = DateTime.UtcNow.AddHours(12),
-                    };
-
-                    _dbContext.Urls.Add(url);
-                    await _dbContext.SaveChangesAsync();
-                }
-
-                return Ok(url);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(url);
         }
+
 
         [HttpGet("{shortCode}")]
         public async Task<IActionResult> RedirectToOriginal(string shortCode)
         {
-            try
-            {
-                Guid id = Base62Services.Base62ToGuid(shortCode);
+            var originalUrl = await _urlService.GetOriginalUrlAsync(shortCode);
 
-                var url = await _dbContext.Urls.FindAsync(id);
-
-                if (url == null)
-                {
-                    return NotFound("The short URL does not exist.");
-                }
-
-                var isExpired = await UrlServices.IsExpiredAsync(id, _dbContext);
-
-                if (isExpired)
-                {
-                    return Ok("This URL has expired.");
-                }
-
-                return Redirect(url.OriginalUrl);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"An error occurred: {ex.Message}");
-            }
+            return Redirect(originalUrl);
         }
 
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> RemoveUrl(int id)
+        {
+            var urlRemoved = await _urlService.RemoveUrlAsync(id);
+
+            if(!urlRemoved)
+            {
+                return NotFound("Url Not Found.");
+            }
+
+            return Ok("Url Removed Successfully.");
+        }
     }
 }
